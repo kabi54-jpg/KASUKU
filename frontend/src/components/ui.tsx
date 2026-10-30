@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, StyleProp, Text, TextInput, TextStyle, View, ViewStyle, TextInputProps } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { border, colors, fonts, radius, role, shadowOffset } from '../theme';
 import { getAvatar } from '../data/avatars';
 import type { AvatarKey } from '../types';

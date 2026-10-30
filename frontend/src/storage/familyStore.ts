@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import type { Child, Family } from '../types';
 import { yesterdayStr } from '../data/avatars';
+import { getStory, storyWords } from '../data/stories';
+import { hasSound } from '../logic/sounds';
 
 /**
  * Local-only family store. No accounts, no server: everything lives in this phone's storage.
@@ -46,9 +48,23 @@ export const makeChild = (p: Pick<Child, 'name' | 'avatar' | 'grade'> & Partial<
 /* ---------- demo family (two seeded fixtures for the comparison demo) ---------- */
 export const buildDemoFamily = (): Family => {
   const y = yesterdayStr();
+  const ngStory = getStory('s2');
+  const childAResults = storyWords(ngStory).map((word, index) => ({
+    index,
+    word,
+    status: hasSound(word, "ng'") ? 'missed' as const : 'correct' as const,
+    ms: hasSound(word, "ng'") ? 4200 : 850,
+  }));
+  const childBResults = storyWords(ngStory).map((word, index) => ({ index, word, status: 'correct' as const, ms: 800 }));
   const amani = makeChild({
     name: 'Amani', avatar: 'giraffe', grade: 1, dailyGoal: 1, streakDays: 3, lastReadDate: y,
-    progress: { s1: { bestStars: 2, accuracy: 80, times: 1, lastDate: y, source: 'mock' } },
+    // Child A fixture: ng' has been missed, so an offline recommendation should select ng' practice.
+    progress: {
+      s1: { bestStars: 2, accuracy: 80, times: 1, lastDate: y, source: 'mock' },
+      s2: { bestStars: 1, accuracy: 67, times: 1, lastDate: y, source: 'mock' },
+    },
+    wordLog: childAResults.map((r) => ({ storyId: 's2', word: r.word, status: r.status, ms: r.ms, date: y })),
+    lastSession: { storyId: 's2', date: y, source: 'mock', results: childAResults },
   });
   const baraka = makeChild({
     name: 'Baraka', avatar: 'lion', grade: 2, dailyGoal: 2, streakDays: 7, lastReadDate: y,
@@ -56,6 +72,9 @@ export const buildDemoFamily = (): Family => {
       s1: { bestStars: 3, accuracy: 100, times: 2, lastDate: y, source: 'mock' },
       s2: { bestStars: 3, accuracy: 100, times: 1, lastDate: y, source: 'mock' },
     },
+    // Child B fixture: the same sample story was read accurately and advances to the next story.
+    wordLog: childBResults.map((r) => ({ storyId: 's2', word: r.word, status: r.status, ms: r.ms, date: y })),
+    lastSession: { storyId: 's2', date: y, source: 'mock', results: childBResults },
   });
   return makeFamily([amani, baraka], true);
 };

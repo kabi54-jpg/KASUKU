@@ -1,32 +1,48 @@
-import React from 'react';
-import { Image, ImageSourcePropType, Text, View } from 'react-native';
-import { colors, fonts, radius, role } from '../theme';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Image, ImageSourcePropType, Text, View } from 'react-native';
+import { colors, fonts, radius } from '../theme';
 import { HardBox } from './ui';
 
-export type BuddyState = 'idle' | 'listening' | 'cheering' | 'helping';
+export type BuddyState = 'idle' | 'listening' | 'checking' | 'cheering' | 'helping' | 'speaking';
 
-/**
- * Person 4 delivers the Kasuku the Parrot PNGs. Drop them in assets/kasuku/ and
- * register them here, e.g.  listening: require('../../assets/kasuku/listening.png').
- * Until then a labelled placeholder (🦜) is drawn so the three required states are testable.
- */
-const BUDDY_IMAGES: Partial<Record<BuddyState, ImageSourcePropType>> = {};
-
-const META: Record<BuddyState, { bg: string; line: string }> = {
-  idle: { bg: role.brand.soft, line: 'Soma nami! Tap the mic and read aloud.' },
-  listening: { bg: role.brand.mid, line: 'Nasikiliza… I am listening.' },
-  cheering: { bg: role.correct.mid, line: 'Hongera! Great reading!' },
-  helping: { bg: role.helped.mid, line: 'Let’s look at this word together.' },
+/** Kasuku's four exported states, supplied in the shared design assets. */
+const BUDDY_IMAGES: Record<BuddyState, ImageSourcePropType> = {
+  idle: require('../../assets/kasuku/kasuku-idle.png'),
+  listening: require('../../assets/kasuku/kasuku-listening.png'),
+  checking: require('../../assets/kasuku/kasuku-listening.png'),
+  cheering: require('../../assets/kasuku/kasuku-cheering.png'),
+  helping: require('../../assets/kasuku/kasuku-helping.png'),
+  speaking: require('../../assets/kasuku/kasuku-listening.png'),
 };
 
-export const KasukuBuddy = ({ state, line, size = 64 }: { state: BuddyState; line?: string; size?: number }) => {
+const META: Record<BuddyState, { line: string }> = {
+  idle: { line: 'Soma nami! Tap the mic and read aloud.' },
+  listening: { line: 'Nasikiliza… I am listening.' },
+  checking: { line: 'Let me check that word…' },
+  cheering: { line: 'Hongera! Great reading!' },
+  helping: { line: 'Let’s look at this word together.' },
+  speaking: { line: 'Listen to me say it first.' },
+};
+
+export const KasukuBuddy = ({ state, line, size = 88 }: { state: BuddyState; line?: string; size?: number }) => {
   const m = META[state];
   const img = BUDDY_IMAGES[state];
+  const bob = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const motion = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bob, { toValue: -3, duration: state === 'listening' || state === 'speaking' ? 500 : 850, useNativeDriver: true }),
+        Animated.timing(bob, { toValue: 0, duration: state === 'listening' || state === 'speaking' ? 500 : 850, useNativeDriver: true }),
+      ]),
+    );
+    motion.start();
+    return () => motion.stop();
+  }, [bob, state]);
+
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <HardBox bg={m.bg} r={size / 2} off={3} contentStyle={{ width: size, height: size, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        {img ? <Image source={img} style={{ width: size - 8, height: size - 8 }} resizeMode="contain" /> : <Text style={{ fontSize: size * 0.5 }}>🦜</Text>}
-      </HardBox>
+      <Animated.Image source={img} resizeMode="contain" style={{ width: size, height: size, transform: [{ translateY: bob }] }} />
       <HardBox style={{ flex: 1 }} r={radius.md} off={2} contentStyle={{ paddingHorizontal: 12, paddingVertical: 8 }}>
         <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, lineHeight: 20, color: colors.text }}>{line ?? m.line}</Text>
       </HardBox>

@@ -1,5 +1,5 @@
 import type { Story, WordResult } from '../types';
-import { storyWords } from '../data/stories.mock';
+import { storyWords } from '../data/stories';
 import { cleanWord, hasSound, tagSounds } from './sounds';
 
 /**
@@ -74,4 +74,3 @@ export const summarise = (results: WordResult[]): ResultSummary => {
 
   return { total, correct, missed, helped, accuracy, stars, weakSounds, wordsToPractise };
 };
-
