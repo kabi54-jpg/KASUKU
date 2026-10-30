@@ -45,7 +45,7 @@ Notes:
 - Windows laptop: `MODEL_LOAD_FAILED ... Failed to initialize Whisper context` with
   WHISPER_BASE_Q8_0 (sha256 verified). Not investigated further (out of scope).
 - Phone with a corrupt `ggml-small-q8_0.bin` (wrong sha256 from an interrupted download):
-  same error message. Fixed by re-downloading; small not yet run on the phone.
+  same error message. Fixed by re-downloading (sha256 now matches the registry).
 
 ## Not yet measured
 Prompt settings; base on child2; base peak memory; m4a input from the real recorder.
