@@ -2,7 +2,7 @@
  * INTEGRATION SEAM — the only file that changes when teammates deliver their parts.
  * App code imports these names from here, never from the mock files directly.
  *
- *  Person 1 (speech)   -> evaluateAudio, speakWord, speechEngineAvailable   (src/services/speechEngine.ts)
+ *  Person 1 (speech)   -> evaluateAudio, speakWord, speechEngineAvailable, startLiveSpeechSession (stub)   (src/services/speechEngine.ts)
  *  Person 2 (content)  -> STORIES / getStory / storyWords, getRecommendation, splitKiswahiliSyllables, tagSounds
  *  Person 4 (assets)   -> Andika font (App.tsx), Kasuku PNGs (KasukuBuddy.tsx), covers (StoryCover.tsx)
  *
@@ -14,7 +14,18 @@ export { getRecommendation } from '../logic/recommendation';
 export { cleanWord, hasSound, splitKiswahiliSyllables, tagSounds } from '../logic/sounds';
 
 /* ---------- Person 1: speech engine ---------- */
-export { evaluateAudio, speakWord, speechEngineAvailable, SpeechEngineNotConnected } from '../services/speechEngine';
+export {
+  evaluateAudio,
+  liveSpeechAvailable,
+  speakWord,
+  speechEngineAvailable,
+  SpeechEngineNotConnected,
+  speechOutputAvailable,
+  startLiveSpeechSession,
+  type LiveSpeechCallbacks,
+  type LiveSpeechPhase,
+  type LiveSpeechSession,
+} from '../services/speechEngine';
 
 /* ---------- Stuck detection (UI side) ---------- */
 /**

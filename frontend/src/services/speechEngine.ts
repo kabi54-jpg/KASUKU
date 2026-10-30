@@ -96,3 +96,32 @@ export async function evaluateAudio(audioUri: string, targetStoryText: string): 
 export async function speakWord(_word: string): Promise<void> {
   throw new SpeechEngineNotConnected('speakWord');
 }
+
+/** Kiswahili text-to-speech for speakWord. Not built: no local voice is wired up yet. */
+export const speechOutputAvailable = false;
+
+/**
+ * Live single-word recognition for the Practice screen. Not built: Whisper scores a finished
+ * recording (several seconds per word on the demo phone), so there is no streaming recogniser.
+ * The screen checks liveSpeechAvailable and shows its "not connected yet" state.
+ */
+export const liveSpeechAvailable = false;
+
+export type LiveSpeechPhase = 'listening' | 'processing';
+
+export interface LiveSpeechCallbacks {
+  onWordResult: (result: WordResult) => void;
+  onPhase: (phase: LiveSpeechPhase) => void;
+  onError: (error: Error) => void;
+}
+
+export interface LiveSpeechSession {
+  /** Stop listening and return the final result(s) for the word. */
+  stop(): Promise<WordResult[]>;
+  /** Stop and discard; the audio is deleted. */
+  cancel(): Promise<void>;
+}
+
+export async function startLiveSpeechSession(_word: string, _callbacks: LiveSpeechCallbacks): Promise<LiveSpeechSession> {
+  throw new SpeechEngineNotConnected('startLiveSpeechSession');
+}
