@@ -42,8 +42,9 @@ const recorder = useAudioRecorder({
 // start: await recorder.prepareToRecord(); recorder.record();
 // stop:  await recorder.stop(); const results = await evaluateAudio(recorder.uri!, story.text);
 ```
-The SDK decodes m4a with its bundled FFmpeg (documented); **verify on the phone** with the
-self-test below before relying on it. Show a "Kasuku is listening to your reading…"
+m4a input is **verified on the phone** (speech-results.md, "m4a input"), but 64 kbps AAC cut word
+accuracy from 0.71 to 0.52 on child2. Use a higher bitrate (128 kbps) until that is measured;
+see the self-test below for checking it. Show a "Kasuku is listening to your reading…"
 state while `evaluateAudio` runs: transcription takes seconds (measured value in
 speech-results.md).
 

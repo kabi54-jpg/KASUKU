@@ -50,6 +50,24 @@ Of the 5 long pauses marked in the child2 review, 1 shows up as a gap (1,580 ms)
 other 4 read 0 ms. Pauses therefore have to come from the audio itself (RMS silence
 detection), not from Whisper.
 
+## m4a input (recorder format, 2026-10-30 15:09, phone, airplane mode on)
+child2.wav was converted with ffmpeg to the recorder settings in integration.md: AAC-LC,
+16 kHz, mono, 64 kbps, mp4 container. It was then run through the self-test (`transcribeWords`)
+with WHISPER_SMALL_Q8_0 and no prompt.
+This tests whether QVAC can read m4a. It does not test a real expo-audio recording.
+
+| Input | Transcribe+load | Peak VmHWM | Word acc. | Fluent marked missed (old / conservative) | Hint: struggled found, fluent hinted |
+|---|---|---|---|---|---|
+| WAV 16 kHz PCM | 252.9 s | 1,163 MB | 0.71 | 5 / 1 | 10/10, 6 |
+| m4a AAC 64 kbps | 199.2 s | 1,048 MB | **0.52** | 11 / 1 | 8/10, 11 |
+
+- **m4a works on the device:** QVAC decodes it with no conversion step.
+- **But accuracy drops:** 64 kbps AAC costs 19 points of word accuracy on this recording
+  (one run each; greedy decoding at temperature 0 is deterministic for a given input).
+- **The conservative rule still holds:** 1 fluent word marked missed in both runs.
+- **Next:** test a higher recorder bitrate (128 kbps, or 44.1 kHz) before the demo. Until then,
+  don't use the 64 kbps setting from integration.md for scoring.
+
 ## Conservative "missed" rule (`conservativeStatuses`, used by `evaluateAudio`, 2026-10-30)
 Policy: a fluent child must almost never be marked wrong. A missed real struggle can still be
 recorded with Help. A word is `missed` only if all of these hold:
