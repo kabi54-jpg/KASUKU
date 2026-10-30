@@ -62,13 +62,18 @@ This tests whether QVAC can read m4a. It does not test a real expo-audio recordi
 | m4a AAC 64 kbps (16 kHz) | 199.2 s | 1,048 MB | **0.52** | 11 / 1 | 8/10, 11 |
 | m4a AAC 128 kbps (44.1 kHz, 119 kbps actual) | 222.5 s | 1,061 MB | **0.50** | 12 / 0 | 10/10, 16 |
 
-**The higher bitrate did not help** (0.50 vs 0.52), so compression level is probably not the
-cause. The 128 kbps run's transcript starts with words that aren't in the audio's first second,
-which points at how the m4a is decoded (encoder priming samples, or resampling in the decode
-path) rather than at audio quality. Not proven. The next check is to decode the m4a back to
-16 kHz WAV on the laptop and run that on the phone: if accuracy returns to about 0.71, the
-problem is QVAC's m4a decode path, not AAC. (ffmpeg's AAC encoder caps 16 kHz mono at about
-67 kbps, so 128 kbps needs 44.1 kHz.)
+| same 128 kbps m4a, decoded to 16 kHz WAV **on the laptop** (ffmpeg), then run on the phone | 245.0 s | 1,048 MB | **0.69** | – / 1 | 10/10, 8 |
+
+**Cause found: the decoding of m4a on the phone, not AAC compression.** The same compressed
+audio decoded by ffmpeg on the laptop scores 0.69, against 0.71 for the original WAV. Decoded
+by QVAC on the phone, it scores 0.50. The phone-decoded transcripts also start with words that
+aren't in the audio (first word at 0 ms with extra words, against 170 ms for both WAVs).
+(ffmpeg's AAC encoder caps 16 kHz mono at about 67 kbps, so 128 kbps needs 44.1 kHz.)
+
+Possible fix, not built: the Whisper plugin also accepts a raw PCM buffer
+(`audio_format: 's16le' | 'f32le'` in `@qvac/inference` whispercpp-transcription schema).
+The app would then need to record PCM, or decode m4a itself, before calling Whisper. Either
+way that means a new native dependency and a rebuild, so not before the deadline.
 
 - **m4a works on the device:** QVAC decodes it with no conversion step.
 - **But accuracy drops:** m4a input costs about 20 points of word accuracy on this recording

@@ -43,7 +43,7 @@ const recorder = useAudioRecorder({
 // stop:  await recorder.stop(); const results = await evaluateAudio(recorder.uri!, story.text);
 ```
 m4a input is **verified on the phone** (speech-results.md, "m4a input"), but m4a cut word
-accuracy from 0.71 to about 0.5 on child2 at both 64 and 128 kbps (cause under investigation);
+accuracy from 0.71 to about 0.5 on child2 (cause: decoding of m4a on the phone; see speech-results.md);
 see the self-test below for checking it. Show a "Kasuku is listening to your reading…"
 state while `evaluateAudio` runs: transcription takes seconds (measured value in
 speech-results.md).
