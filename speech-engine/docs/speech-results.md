@@ -30,6 +30,26 @@ at every setting. **Defaults kept at 0.8 / 0.5** (no tuned setting was better wi
 flagging many fluent words). With the frontend mapping (uncertain -> correct) the defaults
 mark 4 (child1) and 6 (child2) correctly read words as `missed`.
 
+## Timing as a struggle signal (scripts/timing.ts, same phone transcripts)
+Features per target word: ms per letter, pause before, and a combination. AUC 0.5 = chance.
+| Transcript | Positives | ms/letter AUC | pause-before AUC | combined AUC |
+|---|---|---|---|---|
+| child1 small, struggled | 3 | 0.30 | 0.44 | 0.27 |
+| child1 small, struggled+choppy | 5 | 0.31 | 0.44 | 0.27 |
+| child1 base, struggled | 3 | 0.27 | 0.44 | 0.24 |
+| child2 small, struggled | 10 | 0.50 | 0.64 | 0.61 |
+| child2 small, struggled+choppy | 18 | 0.51 | 0.54 | 0.55 |
+
+Best single result: child2 pause-before >= 1030 ms flags 4/10 struggled words with 3 false
+flags (P 0.57, R 0.40), but the threshold was picked on the same data and child1 goes the
+other way (AUC below 0.5). **Not usable.**
+
+Root cause: Whisper word timestamps are contiguous. child2/small: 87 of 90 gaps between
+consecutive word segments are exactly 0 ms, so silence is absorbed into word durations.
+Of the 5 long pauses marked in the child2 review, 1 shows up as a gap (1,580 ms); the
+other 4 read 0 ms. Pauses therefore have to come from the audio itself (RMS silence
+detection), not from Whisper.
+
 ## Prompt settings
 Not run: each phone run takes 3.5 to 4.5 min. Expectation, untested: a prompt containing
 reading.txt pushes Whisper further toward the target text, which would hide more
