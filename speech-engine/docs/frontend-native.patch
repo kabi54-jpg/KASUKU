@@ -1,0 +1,67 @@
+PROPOSED, NOT APPLIED. Needs owner approval (frontend/package.json, frontend/app.json).
+Source: official QVAC Expo tutorial (docs.qvac.tether.io /resources/tutorials/expo), SDK 0.22.0.
+Expo-module versions are the Expo SDK 54 pins from expo@54.0.36 bundledNativeModules.json.
+
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ "scripts"
+-    "android": "expo start --android",
++    "android": "expo run:android --device",
+@@ "dependencies"
+     "@react-native-async-storage/async-storage": "2.2.0",
++    "@qvac/sdk": "0.22.0",
++    "bare-rpc": "^1.3.9",
+     "expo": "~54.0.36",
+     "expo-asset": "~12.0.14",
+     "expo-audio": "~1.1.1",
++    "expo-build-properties": "~1.0.10",
+     "expo-crypto": "~15.0.9",
++    "expo-device": "~8.0.10",
++    "expo-file-system": "~19.0.23",
+     "expo-font": "~14.0.12",
+     "expo-status-bar": "~3.0.9",
+     "react": "19.1.0",
+     "react-native": "0.81.5",
++    "react-native-bare-kit": "^0.16.0",
+     "react-native-safe-area-context": "~5.6.0",
+
+  Note: with "installMissingPrebuilds": true (below), `npx expo prebuild` will ALSO add
+  @qvac/fabric-android-arm64 and @qvac/fabric-ios to package.json at the version the SDK
+  requires (needs network during prebuild). That is the tutorial's documented behaviour.
+
+--- a/frontend/app.json
++++ b/frontend/app.json
+@@ "plugins"
+     "plugins": [
+       "expo-font",
+       [
+         "expo-audio",
+         {
+           "microphonePermission": "Soma Nami listens while your child reads aloud. Audio recordings are not stored."
+         }
+       ],
+-      "expo-asset"
++      "expo-asset",
++      ["expo-build-properties", { "android": { "minSdkVersion": 29 } }],
++      ["@qvac/sdk/expo-plugin", { "installMissingPrebuilds": true }]
+     ]
++  Also add "package": "com.kasuku.somanami" under "android" (prebuild asks for one;
++  name is a suggestion, pick any).
+
+--- /dev/null
++++ b/frontend/qvac.config.json   (new file; bundles ONLY the Whisper engine)
++{
++  "plugins": ["@qvac/sdk/whispercpp-transcription/plugin"]
++}
+
+Then, from frontend/:
+  npm install
+  npx expo prebuild          # links QVAC native addons into react-native-bare-kit;
+                             # re-run after every npm install
+  npx expo run:android --device   # needs Android SDK + JDK 17 + USB debugging; physical
+                                  # device only (QVAC does not run on emulators)
+
+Consequences for the team:
+- Expo Go stops working for this app; everyone runs the dev build (`npx expo start` then
+  opens in the installed dev build).
+- `android/` and `ios/` folders get generated (suggest adding them to .gitignore, CNG).

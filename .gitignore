@@ -1,0 +1,5 @@
+node_modules/
+# Copyrighted test passage + children's voice recordings: never commit
+speech-engine/data/
+speech-engine/models/
+speech-engine/out/
