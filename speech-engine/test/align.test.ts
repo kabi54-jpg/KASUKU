@@ -85,3 +85,20 @@ test('similarity bounds', () => {
   assert.equal(similarity('nyasi', 'nyasi'), 1);
   assert.ok(similarity('nyasi', 'kitabu') < 0.5);
 });
+
+const hinted = (heard: string) => alignWords(STORY, wordsFromText(heard)).filter((w) => w.hesitated).map((w) => w.index);
+
+test('hesitation hint: none on a fluent reading', () => {
+  assert.deepEqual(hinted(STORY), []);
+});
+
+test('hesitation hint: false start before a word that is then read correctly', () => {
+  const words = alignWords(STORY, wordsFromText("Ng'ombe analala shambani. Baba ana anamletea nyasi nyingi."));
+  assert.deepEqual(words.filter((w) => w.hesitated).map((w) => w.index), [4]);
+  assert.equal(words[4].status, 'correct'); // the hint never marks the child wrong
+});
+
+test('hesitation hint: sounded out in pieces, but not a plain token split', () => {
+  assert.deepEqual(hinted("Ng'ombe analala shambani. Baba anam lete nyasi nyingi."), [4]);
+  assert.deepEqual(hinted("Ng'ombe analala shambani. Baba anam letea nyasi nyingi."), []);
+});

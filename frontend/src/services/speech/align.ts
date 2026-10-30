@@ -30,6 +30,12 @@ export interface AlignedWord {
   durationMs?: number;
   /** silence between the previous heard word and this one, if timestamps exist */
   pauseBeforeMs?: number;
+  /**
+   * Soft hint, experimental: the child likely took a while on this word (Whisper heard it in
+   * two pieces that don't join up exactly, or a false start of it right before). Never counts
+   * against the child.
+   */
+  hesitated?: boolean;
 }
 
 export interface AlignOptions {
@@ -140,6 +146,8 @@ export function alignWords(targetText: string, heard: HeardWord[], opts: AlignOp
     out.push(w);
     spans.push({ start: parts[0]?.startMs, end: parts[parts.length - 1]?.endMs });
   };
+  // extra heard words, keyed by the target word they precede (false starts, repeats)
+  const extrasBefore = new Map<number, HeardWord[]>();
   let i = n;
   let j = m;
   while (i > 0 || j > 0) {
@@ -156,11 +164,25 @@ export function alignWords(targetText: string, heard: HeardWord[], opts: AlignOp
       push({ index: i - 1, word: target[i - 1], status: normalizeWord(target[i - 1]) ? 'missed' : 'correct', heard: null, similarity: 0 });
       i--;
     } else {
-      j--; // extra heard word: not a target word, ignored
+      // extra heard word: not a target word, but kept as a possible false start of target i
+      if (i < n) extrasBefore.set(i, [hw[j - 1], ...(extrasBefore.get(i) ?? [])]);
+      j--;
     }
   }
   out.reverse();
   spans.reverse();
+
+  for (const w of out) {
+    if (w.status === 'missed') continue;
+    const key = compareKey(w.word);
+    const falseStart = (extrasBefore.get(w.index) ?? []).some((h) => {
+      const k = compareKey(h.text);
+      return similarity(k, key) >= 0.5 || (k.length >= 2 && key.startsWith(k));
+    });
+    // two pieces that join up to the exact word are just Whisper's token split, not sounding out
+    const soundedOut = (w.heard?.includes(' ') ?? false) && w.similarity < 1;
+    w.hesitated = falseStart || soundedOut;
+  }
 
   let prevEnd: number | undefined;
   out.forEach((w, k) => {

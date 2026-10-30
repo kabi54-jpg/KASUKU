@@ -50,6 +50,29 @@ Of the 5 long pauses marked in the child2 review, 1 shows up as a gap (1,580 ms)
 other 4 read 0 ms. Pauses therefore have to come from the audio itself (RMS silence
 detection), not from Whisper.
 
+## "Took a while" hint (`AlignedWord.hesitated`, 2026-10-30)
+Why scoring misses struggles: the reviews mark a word as struggled even when the child got it
+right in the end. Whisper writes only the final word, so its text often matches.
+The struggle does leave traces, though:
+- **False start:** a heard fragment just before the word that the aligner leaves unassigned
+  is a partial match of the word (similarity >= 0.5, or a prefix of 2+ letters).
+- **Sounded out:** Whisper hears the word in two pieces that don't join up to exactly the word.
+  Pieces that do join up exactly are just Whisper's token split and are ignored. That rule cut
+  child2's fluent false hints from 11 to 6 with no loss.
+
+The hint never changes `status`; word accuracy is unchanged.
+
+| Transcript | Struggled hinted | Hinted on fluent words | Hinted on choppy | Precision |
+|---|---|---|---|---|
+| child2 small | **10/10** | 6/40 | 2/8 | 0.56 |
+| child1 small | 2/3 | 19/53 | 1/2 | 0.09 |
+| child1 base | 3/3 | 30/53 | 1/2 | 0.09 |
+
+Compare word matching alone: 1/10 (child2) and 0/3 (child1).
+The rule was designed while looking at these same two children (13 struggled words in all), so
+treat this as promising, not proven. Whisper splits many of child1's fluent words, so the hint is
+noisy for that child. Show it as a soft "took a while" hint, never as a mistake.
+
 ## Phrasing from the audio (scripts/phrasing.ts, 2026-10-30)
 `frontend/src/services/speech/phrasing.ts`: RMS energy on 20 ms frames, silent if below
 the 10th-percentile frame + 10 dB, silences >= 150 ms kept. Each silence is added to the

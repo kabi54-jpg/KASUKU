@@ -46,6 +46,19 @@ export function score(target: string, heard: HeardWord[], gt: GroundTruth, opts:
     wronglyFlaggedFluent: wronglyFlagged.filter((i) => !gt.choppy.has(i)).map((i) => i + 1),
     wronglyFlaggedChoppy: wronglyFlagged.filter((i) => gt.choppy.has(i)).map((i) => i + 1),
     uncertain: words.filter((w) => w.status === 'uncertain').map((w) => w.index + 1),
+    // soft "took a while" hint vs the struggled list (1-based word positions)
+    hesitated: hintScore(words.filter((w) => w.hesitated).map((w) => w.index), gt),
+  };
+}
+
+function hintScore(hinted: number[], gt: GroundTruth) {
+  const tp = hinted.filter((i) => gt.struggled.has(i)).length;
+  return {
+    hinted: hinted.length,
+    struggledFound: `${tp}/${gt.struggled.size}`,
+    precision: hinted.length ? Math.round((tp / hinted.length) * 100) / 100 : null,
+    onChoppy: hinted.filter((i) => gt.choppy.has(i)).length,
+    onFluent: hinted.filter((i) => !gt.struggled.has(i) && !gt.choppy.has(i)).length,
   };
 }
 

@@ -33,30 +33,30 @@ const PROMPT: string | undefined = undefined;
 
 const toPath = (uri: string) => decodeURI(uri.replace(/^file:\/\//, ''));
 
-function modelSource() {
+const WHISPER_CONFIG = {
+  language: 'sw',
+  strategy: 'greedy',
+  temperature: 0.0,
+  translate: false,
+  no_timestamps: false,
+  token_timestamps: true,
+  max_len: 1,
+  split_on_word: true,
+  suppress_blank: true,
+  suppress_nst: true,
+} as const;
+
+// One call per branch: loadModel is overloaded and won't take a union of the two shapes.
+function loadWhisper() {
   const local = LOCAL_MODEL_NAMES.map((n) => new File(Paths.document, n)).find((f) => f.exists);
   return local
-    ? { modelSrc: toPath(local.uri), modelType: 'whispercpp-transcription' as const }
-    : { modelSrc: WHISPER_SMALL_Q8_0 };
+    ? loadModel({ modelSrc: toPath(local.uri), modelType: 'whispercpp-transcription', modelConfig: WHISPER_CONFIG })
+    : loadModel({ modelSrc: WHISPER_SMALL_Q8_0, modelConfig: WHISPER_CONFIG });
 }
 
 /** Transcribe with one Whisper segment per word. Loads the model only for this call. */
 export async function transcribeWords(audioUri: string): Promise<HeardWord[]> {
-  const modelId = await loadModel({
-    ...modelSource(),
-    modelConfig: {
-      language: 'sw',
-      strategy: 'greedy',
-      temperature: 0.0,
-      translate: false,
-      no_timestamps: false,
-      token_timestamps: true,
-      max_len: 1,
-      split_on_word: true,
-      suppress_blank: true,
-      suppress_nst: true,
-    },
-  } as Parameters<typeof loadModel>[0]);
+  const modelId = await loadWhisper();
   try {
     const segments = await transcribe({ modelId, audioChunk: toPath(audioUri), metadata: true, ...(PROMPT ? { prompt: PROMPT } : {}) });
     return segments.map((s) => ({ text: s.text.trim(), startMs: s.startMs, endMs: s.endMs }));
