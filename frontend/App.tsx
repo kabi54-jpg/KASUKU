@@ -3,8 +3,6 @@ import { ActivityIndicator, BackHandler, ScrollView, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
-import { PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 import { Andika_400Regular, Andika_700Bold } from '@expo-google-fonts/andika';
 
 import { colors, role } from './src/theme';
@@ -85,11 +83,7 @@ const Overlay = () => {
 
 export default function App() {
   const [loaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    PlayfairDisplay_700Bold,
-    // Swap for Person 4's file when delivered:  Andika_400Regular: require('./assets/fonts/Andika-Regular.ttf')
+    // Andika (SIL OFL) supports early readers and is bundled locally for the offline demo.
     Andika_400Regular,
     Andika_700Bold,
   });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { colors, fonts, radius, role } from '../theme';
 import { AuthPage } from '../components/AuthPage';
 import { Btn, HardBox, LinkBtn, Txt } from '../components/ui';

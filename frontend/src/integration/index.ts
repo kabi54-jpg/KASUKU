@@ -6,27 +6,12 @@
  *  Person 2 (content)  -> STORIES / getStory / storyWords, getRecommendation, splitKiswahiliSyllables, tagSounds
  *  Person 4 (assets)   -> Andika font (App.tsx), Kasuku PNGs (KasukuBuddy.tsx), covers (StoryCover.tsx)
  *
- * To swap in a teammate's module, change ONE re-export below and keep the signature.
  */
-import type { Child, Recommendation, WordResult } from '../types';
-import { getStory, STORIES } from '../data/stories.mock';
-import { mockRecommendation } from '../logic/recommendation.mock';
+export { STORIES, getStory, storyWords } from '../data/stories';
+export { getRecommendation } from '../logic/recommendation';
 
-/* ---------- Person 2: stories (replace with assets/stories.json) ---------- */
-export { STORIES, getStory, storyWords } from '../data/stories.mock';
-
-/* ---------- Person 2: syllables & sound tags (replace with their tested helper) ---------- */
+/* ---------- Person 2: syllables & sound tags ---------- */
 export { cleanWord, hasSound, splitKiswahiliSyllables, tagSounds } from '../logic/sounds';
-
-/**
- * Person 2: getRecommendation(childProfile, lastWordResults): Recommendation.
- * The story just read is `child.lastSession.storyId` — callers set lastSession before calling.
- * Deterministic and offline. Replace the body with Person 2's function.
- */
-export const getRecommendation = (child: Child, lastWordResults: WordResult[]): Recommendation => {
-  const story = getStory(child.lastSession?.storyId ?? STORIES[0].id);
-  return mockRecommendation(story, lastWordResults);
-};
 
 /* ---------- Person 1: speech engine ---------- */
 export { evaluateAudio, speakWord, speechEngineAvailable, SpeechEngineNotConnected } from '../services/speechEngine';

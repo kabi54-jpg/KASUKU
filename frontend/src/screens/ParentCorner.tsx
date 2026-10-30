@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert, Text, View } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { colors, fonts, radius, role } from '../theme';
 import { Btn, Divider, HardBox, MockBanner, Segmented, StatCard, Txt } from '../components/ui';
 import { getRecommendation, STORIES } from '../integration';

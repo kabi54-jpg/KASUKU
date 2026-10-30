@@ -73,10 +73,11 @@ export const colors = {
 } as const;
 
 export const fonts = {
-  body: 'Poppins_400Regular',
-  bodyMedium: 'Poppins_500Medium',
-  bodySemi: 'Poppins_600SemiBold',
-  display: 'PlayfairDisplay_700Bold',
+  // Device fonts keep the interface usable when optional display-font assets are unavailable.
+  body: 'System',
+  bodyMedium: 'System',
+  bodySemi: 'System',
+  display: 'serif',
   // Reading text. Andika (SIL OFL) is designed for early readers.
   // Person 4 delivers Andika-Regular.ttf; until it is swapped into the useFonts() call
   // in App.tsx, the @expo-google-fonts build of Andika is used.
