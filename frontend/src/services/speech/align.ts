@@ -208,3 +208,28 @@ function classify(index: number, word: string, parts: HeardWord[], opts: AlignOp
 export function toFrontendStatus(s: InternalStatus): 'correct' | 'missed' {
   return s === 'misread' || s === 'missed' ? 'missed' : 'correct';
 }
+
+/**
+ * Conservative statuses for the UI: a fluent child must almost never be marked wrong, and a
+ * real struggle the engine lets through can still be recorded with Help.
+ * A word is 'missed' only if it is misread/missed (never uncertain), sits in a run of at most
+ * two such words, and the words on both sides of the run were read correctly. Anything else,
+ * including a mismatch inside a run of misaligned words, counts as correct.
+ */
+export const MAX_MISSED_RUN = 2;
+
+export function conservativeStatuses(words: AlignedWord[]): ('correct' | 'missed')[] {
+  const out = words.map(() => 'correct' as 'correct' | 'missed');
+  let k = 0;
+  while (k < words.length) {
+    if (words[k].status === 'correct') { k++; continue; }
+    let end = k;
+    while (end < words.length && words[end].status !== 'correct') end++;
+    const run = words.slice(k, end);
+    const anchored = k > 0 && end < words.length; // neighbours are correct by construction
+    const strong = run.every((w) => w.status === 'misread' || w.status === 'missed');
+    if (anchored && strong && run.length <= MAX_MISSED_RUN) for (let r = k; r < end; r++) out[r] = 'missed';
+    k = end;
+  }
+  return out;
+}

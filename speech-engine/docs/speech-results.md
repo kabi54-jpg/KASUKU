@@ -50,6 +50,25 @@ Of the 5 long pauses marked in the child2 review, 1 shows up as a gap (1,580 ms)
 other 4 read 0 ms. Pauses therefore have to come from the audio itself (RMS silence
 detection), not from Whisper.
 
+## Conservative "missed" rule (`conservativeStatuses`, used by `evaluateAudio`, 2026-10-30)
+Policy: a fluent child must almost never be marked wrong. A missed real struggle can still be
+recorded with Help. A word is `missed` only if all of these hold:
+- it is misread or missed (never uncertain);
+- it sits in a run of at most 2 such words;
+- the words on both sides of the run were read correctly.
+
+Everything else counts as correct. Fillers and inserted words were already left out of the
+scoring sequence by the aligner.
+
+| Transcript | Fluent marked missed: old → new | Struggled marked missed: old → new |
+|---|---|---|
+| child1 small | 4 → **0** | 0/3 → 0/3 |
+| child1 base | 18 → **0** | 0/3 → 0/3 |
+| child2 small | 5 (+1 choppy) → **1** | 1/10 → 0/10 |
+
+The trade-off is deliberate: red "missed" marks become rare, and struggles are surfaced by the
+soft hint and the Help button instead. Call any red mark "experimental feedback", not a diagnosis.
+
 ## "Took a while" hint (`AlignedWord.hesitated`, 2026-10-30)
 Why scoring misses struggles: the reviews mark a word as struggled even when the child got it
 right in the end. Whisper writes only the final word, so its text often matches.

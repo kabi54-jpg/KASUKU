@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   alignWords,
+  conservativeStatuses,
   compareKey,
   normalizeWord,
   similarity,
@@ -101,4 +102,24 @@ test('hesitation hint: false start before a word that is then read correctly', (
 test('hesitation hint: sounded out in pieces, but not a plain token split', () => {
   assert.deepEqual(hinted("Ng'ombe analala shambani. Baba anam lete nyasi nyingi."), [4]);
   assert.deepEqual(hinted("Ng'ombe analala shambani. Baba anam letea nyasi nyingi."), []);
+});
+
+const ui = (heard: string) => conservativeStatuses(alignWords(STORY, wordsFromText(heard)));
+
+test('conservative: a clearly skipped word between two correct words is missed', () => {
+  assert.deepEqual(ui("Ng'ombe analala shambani. Baba nyasi nyingi."), ['correct', 'correct', 'correct', 'correct', 'missed', 'correct', 'correct']);
+});
+
+test('conservative: no anchor on one side (first word) counts as correct', () => {
+  assert.deepEqual(ui('kitabu analala shambani. Baba anamletea nyasi nyingi.'), Array(7).fill('correct'));
+});
+
+test('conservative: a run of three mismatches counts as correct', () => {
+  assert.deepEqual(ui("Ng'ombe kitabu meza dirisha anamletea nyasi nyingi."), Array(7).fill('correct'));
+});
+
+test('conservative: an uncertain word is never missed', () => {
+  const words = alignWords(STORY, wordsFromText("Ng'ombe analala shambani. Baba anamle nyasi nyingi."));
+  assert.equal(words[4].status, 'uncertain');
+  assert.equal(conservativeStatuses(words)[4], 'correct');
 });

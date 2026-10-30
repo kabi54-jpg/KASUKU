@@ -1,7 +1,7 @@
 import { File, Paths } from 'expo-file-system';
 import { loadModel, transcribe, unloadModel, WHISPER_SMALL_Q8_0 } from '@qvac/sdk';
 import type { WordResult } from '../types';
-import { alignWords, toFrontendStatus, type AlignedWord, type HeardWord } from './speech/align';
+import { alignWords, conservativeStatuses, type AlignedWord, type HeardWord } from './speech/align';
 
 /**
  * INTEGRATION POINT — Person 1 (Speech Engine & QVAC pipeline).
@@ -84,10 +84,11 @@ export async function evaluateAudioDetailed(audioUri: string, targetStoryText: s
 
 export async function evaluateAudio(audioUri: string, targetStoryText: string): Promise<WordResult[]> {
   const aligned = await evaluateAudioDetailed(audioUri, targetStoryText);
-  return aligned.map((w) => ({
+  const statuses = conservativeStatuses(aligned);
+  return aligned.map((w, k) => ({
     index: w.index,
     word: w.word,
-    status: toFrontendStatus(w.status),
+    status: statuses[k],
     ...(w.durationMs !== undefined ? { ms: w.durationMs } : {}),
   }));
 }

@@ -7,7 +7,7 @@
  * Positions in the review files are 1-based; aligner indexes are 0-based.
  */
 import { readFileSync } from 'node:fs';
-import { alignWords, type AlignOptions, DEFAULT_ALIGN_OPTIONS, type HeardWord } from '../../frontend/src/services/speech/align.ts';
+import { alignWords, type AlignedWord, type AlignOptions, conservativeStatuses, DEFAULT_ALIGN_OPTIONS, type HeardWord } from '../../frontend/src/services/speech/align.ts';
 
 export interface GroundTruth {
   struggled: Set<number>; // 0-based
@@ -46,8 +46,21 @@ export function score(target: string, heard: HeardWord[], gt: GroundTruth, opts:
     wronglyFlaggedFluent: wronglyFlagged.filter((i) => !gt.choppy.has(i)).map((i) => i + 1),
     wronglyFlaggedChoppy: wronglyFlagged.filter((i) => gt.choppy.has(i)).map((i) => i + 1),
     uncertain: words.filter((w) => w.status === 'uncertain').map((w) => w.index + 1),
+    // what the UI shows with the conservative rule (1-based word positions)
+    conservative: conservativeScore(words, gt),
     // soft "took a while" hint vs the struggled list (1-based word positions)
     hesitated: hintScore(words.filter((w) => w.hesitated).map((w) => w.index), gt),
+  };
+}
+
+function conservativeScore(words: AlignedWord[], gt: GroundTruth) {
+  const st = conservativeStatuses(words);
+  const missed = words.filter((_, k) => st[k] === 'missed').map((w) => w.index);
+  return {
+    missed: missed.length,
+    struggledMarkedMissed: `${missed.filter((i) => gt.struggled.has(i)).length}/${gt.struggled.size}`,
+    fluentMarkedMissed: missed.filter((i) => !gt.struggled.has(i) && !gt.choppy.has(i)).map((i) => i + 1),
+    choppyMarkedMissed: missed.filter((i) => gt.choppy.has(i)).map((i) => i + 1),
   };
 }
 
