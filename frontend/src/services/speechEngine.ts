@@ -22,8 +22,11 @@ export class SpeechEngineNotConnected extends Error {
   }
 }
 
-/** Optional pre-copied model (adb push, for offline demos); otherwise the SDK registry is used. */
-const LOCAL_MODEL_NAME = 'ggml-small-q8_0.bin';
+/**
+ * Optional pre-copied models (adb push, for offline demos), first found wins; otherwise the
+ * SDK registry is used. Files must match the registry sha256 (see speech-notes.md).
+ */
+const LOCAL_MODEL_NAMES = ['ggml-small-q8_0.bin', 'ggml-base-q8_0.bin'];
 
 /** Whisper initial prompt. Off until Step 2 measures whether it hides struggled words. */
 const PROMPT: string | undefined = undefined;
@@ -31,8 +34,8 @@ const PROMPT: string | undefined = undefined;
 const toPath = (uri: string) => decodeURI(uri.replace(/^file:\/\//, ''));
 
 function modelSource() {
-  const local = new File(Paths.document, LOCAL_MODEL_NAME);
-  return local.exists
+  const local = LOCAL_MODEL_NAMES.map((n) => new File(Paths.document, n)).find((f) => f.exists);
+  return local
     ? { modelSrc: toPath(local.uri), modelType: 'whispercpp-transcription' as const }
     : { modelSrc: WHISPER_SMALL_Q8_0 };
 }
