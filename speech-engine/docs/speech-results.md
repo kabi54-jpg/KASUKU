@@ -59,14 +59,22 @@ This tests whether QVAC can read m4a. It does not test a real expo-audio recordi
 | Input | Transcribe+load | Peak VmHWM | Word acc. | Fluent marked missed (old / conservative) | Hint: struggled found, fluent hinted |
 |---|---|---|---|---|---|
 | WAV 16 kHz PCM | 252.9 s | 1,163 MB | 0.71 | 5 / 1 | 10/10, 6 |
-| m4a AAC 64 kbps | 199.2 s | 1,048 MB | **0.52** | 11 / 1 | 8/10, 11 |
+| m4a AAC 64 kbps (16 kHz) | 199.2 s | 1,048 MB | **0.52** | 11 / 1 | 8/10, 11 |
+| m4a AAC 128 kbps (44.1 kHz, 119 kbps actual) | 222.5 s | 1,061 MB | **0.50** | 12 / 0 | 10/10, 16 |
+
+**The higher bitrate did not help** (0.50 vs 0.52), so compression level is probably not the
+cause. The 128 kbps run's transcript starts with words that aren't in the audio's first second,
+which points at how the m4a is decoded (encoder priming samples, or resampling in the decode
+path) rather than at audio quality. Not proven. The next check is to decode the m4a back to
+16 kHz WAV on the laptop and run that on the phone: if accuracy returns to about 0.71, the
+problem is QVAC's m4a decode path, not AAC. (ffmpeg's AAC encoder caps 16 kHz mono at about
+67 kbps, so 128 kbps needs 44.1 kHz.)
 
 - **m4a works on the device:** QVAC decodes it with no conversion step.
-- **But accuracy drops:** 64 kbps AAC costs 19 points of word accuracy on this recording
-  (one run each; greedy decoding at temperature 0 is deterministic for a given input).
-- **The conservative rule still holds:** 1 fluent word marked missed in both runs.
-- **Next:** test a higher recorder bitrate (128 kbps, or 44.1 kHz) before the demo. Until then,
-  don't use the 64 kbps setting from integration.md for scoring.
+- **But accuracy drops:** m4a input costs about 20 points of word accuracy on this recording
+  at either bitrate (one run each; greedy decoding at temperature 0 is deterministic for a
+  given input).
+- **The conservative rule still holds:** at most 1 fluent word marked missed in every run.
 
 ## Conservative "missed" rule (`conservativeStatuses`, used by `evaluateAudio`, 2026-10-30)
 Policy: a fluent child must almost never be marked wrong. A missed real struggle can still be

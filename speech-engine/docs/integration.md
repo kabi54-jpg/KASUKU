@@ -35,15 +35,15 @@ SpeechEngineNotConnected
 Android can't record WAV; record AAC/m4a at speech settings and pass the URI:
 ```ts
 const recorder = useAudioRecorder({
-  extension: '.m4a', sampleRate: 16000, numberOfChannels: 1, bitRate: 128000, // 64 kbps measured worse
+  extension: '.m4a', sampleRate: 16000, numberOfChannels: 1, bitRate: 128000,
   android: { outputFormat: 'mpeg4', audioEncoder: 'aac' },
   ios: { audioQuality: AudioQuality.HIGH, outputFormat: IOSOutputFormat.MPEG4AAC },
 });
 // start: await recorder.prepareToRecord(); recorder.record();
 // stop:  await recorder.stop(); const results = await evaluateAudio(recorder.uri!, story.text);
 ```
-m4a input is **verified on the phone** (speech-results.md, "m4a input"), but 64 kbps AAC cut word
-accuracy from 0.71 to 0.52 on child2. Use a higher bitrate (128 kbps) until that is measured;
+m4a input is **verified on the phone** (speech-results.md, "m4a input"), but m4a cut word
+accuracy from 0.71 to about 0.5 on child2 at both 64 and 128 kbps (cause under investigation);
 see the self-test below for checking it. Show a "Kasuku is listening to your reading…"
 state while `evaluateAudio` runs: transcription takes seconds (measured value in
 speech-results.md).
