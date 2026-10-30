@@ -3,13 +3,14 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder } from 'expo-audio';
 import { colors, radius } from '../theme';
 import { Avatar, Badge, Btn, HardBox, LevelPill, MockBanner, ProgressBar, Txt } from '../components/ui';
 import { KasukuBuddy, BuddyState } from '../components/KasukuBuddy';
 import { Legend, WordChip } from '../components/WordChip';
 import { HelpSheet } from '../components/HelpSheet';
 import { StoryCover } from '../components/StoryCover';
-import { getStory, speechEngineAvailable, STUCK_MS, storyWords } from '../integration';
+import { evaluateAudio, getStory, speechEngineAvailable, STUCK_MS, storyWords } from '../integration';
 import { makeMockResults } from '../logic/mockResults';
 import { useReadingSession } from '../logic/readingSession';
 import { Celebration, ResultPanel } from './ReadingFinish';
@@ -27,9 +28,14 @@ export const ReadingScreen = () => {
   const [finished, setFinished] = useState<FinishedReading | null>(null);
   const [help, setHelp] = useState<{ index: number; word: string; auto: boolean } | null>(null);
   const [testOpen, setTestOpen] = useState(false);
+  const [scoring, setScoring] = useState(false);
   const saved = useRef(false);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
-  const session = useReadingSession(words, !!help, (i) => setHelp({ index: i, word: words[i], auto: true }));
+  // The engine scores after Stop (no per-word progress while reading), so the stuck timer
+  // would fire every few seconds during a live recording: keep it paused then.
+  const [liveRecording, setLiveRecording] = useState(false);
+  const session = useReadingSession(words, !!help || liveRecording, (i) => setHelp({ index: i, word: words[i], auto: true }));
   const { results, current, done, listening, source } = session;
 
   // Finished: save once, then celebrate.
@@ -45,15 +51,50 @@ export const ReadingScreen = () => {
   const byIndex = useMemo(() => new Map(results.map((r) => [r.index, r.status])), [results]);
   const buddy: BuddyState = help ? 'helping' : listening ? 'listening' : done ? 'cheering' : 'idle';
 
-  const toggleMic = () => {
-    if (listening) {
-      session.stop();
-      showToast(speechEngineAvailable ? 'Stopped listening.' : 'Stopped. No speech engine is connected, so no words were recognised.');
-    } else {
-      session.start();
+  const toggleMic = async () => {
+    if (scoring) return;
+    if (!speechEngineAvailable) {
+      if (listening) {
+        session.stop();
+        showToast('Stopped. No speech engine is connected, so no words were recognised.');
+      } else {
+        session.start();
+      }
+      return;
     }
-    // Person 1: when connected, record audio here, stop it on "Stop", call evaluateAudio(uri, story.text)
-    // and pass the WordResult[] to session.applyAll(results, 'live').
+
+    if (!listening) {
+      try {
+        const perm = await requestRecordingPermissionsAsync();
+        if (!perm.granted) {
+          showToast('Kasuku needs the microphone to listen. You can still tap words for help.');
+          return;
+        }
+        await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+        await recorder.prepareToRecordAsync();
+        recorder.record();
+        setLiveRecording(true);
+        session.start();
+      } catch {
+        showToast('Could not start the microphone.');
+      }
+      return;
+    }
+
+    // Stop: score the recording on the phone (offline). evaluateAudio deletes the audio file.
+    session.stop();
+    setLiveRecording(false);
+    setScoring(true);
+    try {
+      await recorder.stop();
+      const uri = recorder.uri;
+      if (!uri) throw new Error('no recording');
+      session.applyAll(await evaluateAudio(uri, story.text), 'live');
+    } catch {
+      showToast('Kasuku could not check this reading. Tap any word for help, or try again.');
+    } finally {
+      setScoring(false);
+    }
   };
 
   const again = () => {
@@ -131,18 +172,30 @@ export const ReadingScreen = () => {
             </HardBox>
 
             <Btn
-              label={listening ? 'Stop' : 'Start reading'}
-              icon={listening ? 'square' : 'mic'}
+              label={scoring ? 'Kasuku is listening to your reading…' : listening ? 'Stop' : 'Start reading'}
+              icon={scoring ? 'loader' : listening ? 'square' : 'mic'}
               variant="primary"
               block
               onPress={toggleMic}
             />
-            {listening && (
+            {listening && !speechEngineAvailable && (
               <Txt v="small" style={{ textAlign: 'center' }}>
                 If a word takes longer than {STUCK_MS / 1000} seconds, Kasuku will help.
               </Txt>
             )}
-            {!speechEngineAvailable && (
+            {listening && speechEngineAvailable && (
+              <Txt v="small" style={{ textAlign: 'center' }}>
+                Read the whole story, then tap Stop. Stuck on a word? Tap it for help.
+              </Txt>
+            )}
+            {scoring && (
+              <Txt v="small" style={{ textAlign: 'center' }}>
+                Checking on this phone, offline. This can take a minute.
+              </Txt>
+            )}
+            {speechEngineAvailable ? (
+              <MockBanner text="Experimental feedback: Kasuku listens offline on this phone, but its word marks can be wrong. Tap any word for help. Recordings are deleted after checking." />
+            ) : (
               <MockBanner text="Speech engine not connected yet. The mic does not recognise speech in this build — move on with “I said it!” or the test controls below." />
             )}
 

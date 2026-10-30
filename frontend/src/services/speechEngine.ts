@@ -13,7 +13,7 @@ import { alignWords, conservativeStatuses, type AlignedWord, type HeardWord } fr
  * `speechEngineAvailable` flips to true only once this is verified on the demo phone;
  * until then the UI says so honestly instead of pretending to recognise speech.
  */
-export const speechEngineAvailable = false;
+export const speechEngineAvailable = true;
 
 export class SpeechEngineNotConnected extends Error {
   constructor(fn: string) {
