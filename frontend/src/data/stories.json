@@ -1,0 +1,44 @@
+[
+  {
+    "id": "s1",
+    "title": "Kijana Anasoma",
+    "level": 1,
+    "soundTags": ["ki", "ma"],
+    "text": "Kijana anasoma kitabu. Mama anampa kalamu. Kila siku kijana husoma nyumbani."
+  },
+  {
+    "id": "s2",
+    "title": "Ng'ombe wa Baba",
+    "level": 1,
+    "soundTags": ["ng'", "ny"],
+    "text": "Ng'ombe wa Baba yuko shambani. Anakula nyasi nyingi. Baba anampa maji asubuhi."
+  },
+  {
+    "id": "s3",
+    "title": "Paka na Panya",
+    "level": 1,
+    "soundTags": ["ny", "sh"],
+    "text": "Paka mweusi anaona panya. Panya anakimbia shimoni. Paka anabaki kwenye nyasi."
+  },
+  {
+    "id": "s4",
+    "title": "Mwalimu wa Shule",
+    "level": 2,
+    "soundTags": ["mwa", "sh"],
+    "text": "Mwalimu wetu anafundisha kusoma. Watoto wa shule wanamsikiliza. Mwalimu anawasifu baada ya somo."
+  },
+  {
+    "id": "s5",
+    "title": "Samaki Mtoni",
+    "level": 2,
+    "soundTags": ["mb", "nd"],
+    "text": "Samaki wa Mtoni wanaogelea. Mbwa anaangalia kwenye daraja. Ndani ya maji kuna mawe madogo."
+  },
+  {
+    "id": "s6",
+    "title": "Dhahabu na Shamba",
+    "level": 3,
+    "soundTags": ["dh", "ch", "th"],
+    "text": "Dhahabu anacheza shambani. Anachuma matunda matamu. Kisha anathamini kazi ya familia yake."
+  }
+]

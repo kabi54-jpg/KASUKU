@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Animated, Easing, Pressable, Text, View } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
 import { colors, fonts, radius, role } from '../theme';
 import { HardBox, Txt } from './ui';
 

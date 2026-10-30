@@ -52,7 +52,7 @@ export const HelpSheet = ({
                 </View>
               )}
               <Txt v="small" style={{ textAlign: 'center' }}>
-                Syllable split is a draft placeholder until Person 2’s helper is connected.
+                Let’s say each part slowly, then say the whole word.
               </Txt>
             </View>
 
