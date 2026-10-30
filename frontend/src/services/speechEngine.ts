@@ -1,17 +1,19 @@
+import { File, Paths } from 'expo-file-system';
+import { loadModel, transcribe, unloadModel, WHISPER_SMALL_Q8_0 } from '@qvac/sdk';
 import type { WordResult } from '../types';
+import { alignWords, conservativeStatuses, type AlignedWord, type HeardWord } from './speech/align';
 
 /**
  * INTEGRATION POINT — Person 1 (Speech Engine & QVAC pipeline).
  *
- * Replace the bodies below with the real @qvac/sdk-backed functions once the
- * runtime (Expo Go vs. development build) is confirmed. Signatures match the plan:
  *   evaluateAudio(audioUri, targetStoryText): Promise<WordResult[]>
  *   speakWord(word): Promise<void>
  *
- * Until then `speechEngineAvailable` is false and the UI says so honestly instead of
- * pretending to recognise speech.
+ * Whisper runs on the phone through @qvac/sdk (development build, not Expo Go).
+ * `speechEngineAvailable` flips to true only once this is verified on the demo phone;
+ * until then the UI says so honestly instead of pretending to recognise speech.
  */
-export const speechEngineAvailable = false;
+export const speechEngineAvailable = true;
 
 export class SpeechEngineNotConnected extends Error {
   constructor(fn: string) {
@@ -20,10 +22,106 @@ export class SpeechEngineNotConnected extends Error {
   }
 }
 
-export async function evaluateAudio(_audioUri: string, _targetStoryText: string): Promise<WordResult[]> {
-  throw new SpeechEngineNotConnected('evaluateAudio');
+/**
+ * Optional pre-copied models (adb push, for offline demos), first found wins; otherwise the
+ * SDK registry is used. Files must match the registry sha256 (see speech-notes.md).
+ */
+const LOCAL_MODEL_NAMES = ['ggml-small-q8_0.bin', 'ggml-base-q8_0.bin'];
+
+/** Whisper initial prompt. Off until Step 2 measures whether it hides struggled words. */
+const PROMPT: string | undefined = undefined;
+
+const toPath = (uri: string) => decodeURI(uri.replace(/^file:\/\//, ''));
+
+const WHISPER_CONFIG = {
+  language: 'sw',
+  strategy: 'greedy',
+  temperature: 0.0,
+  translate: false,
+  no_timestamps: false,
+  token_timestamps: true,
+  max_len: 1,
+  split_on_word: true,
+  suppress_blank: true,
+  suppress_nst: true,
+} as const;
+
+// One call per branch: loadModel is overloaded and won't take a union of the two shapes.
+function loadWhisper() {
+  const local = LOCAL_MODEL_NAMES.map((n) => new File(Paths.document, n)).find((f) => f.exists);
+  return local
+    ? loadModel({ modelSrc: toPath(local.uri), modelType: 'whispercpp-transcription', modelConfig: WHISPER_CONFIG })
+    : loadModel({ modelSrc: WHISPER_SMALL_Q8_0, modelConfig: WHISPER_CONFIG });
+}
+
+/** Transcribe with one Whisper segment per word. Loads the model only for this call. */
+export async function transcribeWords(audioUri: string): Promise<HeardWord[]> {
+  const modelId = await loadWhisper();
+  try {
+    const segments = await transcribe({ modelId, audioChunk: toPath(audioUri), metadata: true, ...(PROMPT ? { prompt: PROMPT } : {}) });
+    return segments.map((s) => ({ text: s.text.trim(), startMs: s.startMs, endMs: s.endMs }));
+  } finally {
+    await unloadModel({ modelId });
+  }
+}
+
+/** Richer result for the harness and future UI (heard text, similarity, pauses). */
+export async function evaluateAudioDetailed(audioUri: string, targetStoryText: string, keepAudio = false): Promise<AlignedWord[]> {
+  try {
+    return alignWords(targetStoryText, await transcribeWords(audioUri));
+  } finally {
+    // Children's audio is never kept after scoring.
+    if (!keepAudio) {
+      try {
+        const f = new File(audioUri);
+        if (f.exists) f.delete();
+      } catch {
+        // best effort
+      }
+    }
+  }
+}
+
+export async function evaluateAudio(audioUri: string, targetStoryText: string): Promise<WordResult[]> {
+  const aligned = await evaluateAudioDetailed(audioUri, targetStoryText);
+  const statuses = conservativeStatuses(aligned);
+  return aligned.map((w, k) => ({
+    index: w.index,
+    word: w.word,
+    status: statuses[k],
+    ...(w.durationMs !== undefined ? { ms: w.durationMs } : {}),
+  }));
 }
 
 export async function speakWord(_word: string): Promise<void> {
   throw new SpeechEngineNotConnected('speakWord');
+}
+
+/** Kiswahili text-to-speech for speakWord. Not built: no local voice is wired up yet. */
+export const speechOutputAvailable = false;
+
+/**
+ * Live single-word recognition for the Practice screen. Not built: Whisper scores a finished
+ * recording (several seconds per word on the demo phone), so there is no streaming recogniser.
+ * The screen checks liveSpeechAvailable and shows its "not connected yet" state.
+ */
+export const liveSpeechAvailable = false;
+
+export type LiveSpeechPhase = 'listening' | 'processing';
+
+export interface LiveSpeechCallbacks {
+  onWordResult: (result: WordResult) => void;
+  onPhase: (phase: LiveSpeechPhase) => void;
+  onError: (error: Error) => void;
+}
+
+export interface LiveSpeechSession {
+  /** Stop listening and return the final result(s) for the word. */
+  stop(): Promise<WordResult[]>;
+  /** Stop and discard; the audio is deleted. */
+  cancel(): Promise<void>;
+}
+
+export async function startLiveSpeechSession(_word: string, _callbacks: LiveSpeechCallbacks): Promise<LiveSpeechSession> {
+  throw new SpeechEngineNotConnected('startLiveSpeechSession');
 }

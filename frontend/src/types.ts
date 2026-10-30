@@ -61,6 +61,8 @@ export interface AttemptLog {
   status: WordStatus;
   ms?: number;
   date: string;
+  /** How the result was produced. Missing on attempts saved before this field existed. */
+  source?: ResultSource;
 }
 
 /** The most recent finished reading — feeds getRecommendation() and the Parent Corner. */
