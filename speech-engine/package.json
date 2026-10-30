@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx --test test/align.test.ts test/data.test.ts"
+    "test": "tsx --test test/align.test.ts test/data.test.ts test/phrasing.test.ts"
   },
   "dependencies": {
     "@qvac/sdk": "^0.22.0",

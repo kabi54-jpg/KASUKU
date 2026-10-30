@@ -50,6 +50,30 @@ Of the 5 long pauses marked in the child2 review, 1 shows up as a gap (1,580 ms)
 other 4 read 0 ms. Pauses therefore have to come from the audio itself (RMS silence
 detection), not from Whisper.
 
+## Phrasing from the audio (scripts/phrasing.ts, 2026-10-30)
+`frontend/src/services/speech/phrasing.ts`: RMS energy on 20 ms frames, silent if below
+the 10th-percentile frame + 10 dB, silences >= 150 ms kept. Each silence is added to the
+word gap whose Whisper boundary is nearest. A full stop with < 250 ms of silence counts as
+read through, and a mid-sentence gap with > 700 ms counts as a long pause.
+`analysePhrasing(aligned, text, silences)` is separate; `evaluateAudio` is unchanged.
+Run on data/*.wav plus the Whisper small transcripts from the phone (computed on the laptop).
+
+| Child | Long pauses (truth) | Detected | Ran-through stops (truth) | Detected |
+|---|---|---|---|---|
+| child1 | 0 | 0 found, 0 false | 1 | 1/1 found, 3 false (of 7 stops) |
+| child2 | 5 | 1/5 found, 1 false | 2 | 1/2 found, 2 false |
+
+Sweep (margin 6 to 15 dB, min silence 100 to 200 ms, stop 150 to 350 ms, long 400 to 900 ms),
+both children pooled: best F1 0.43 (3 found, 3 false, 5 missed) vs 0.35 at the defaults.
+That is picked from only 8 true events, so **the defaults are kept**.
+Why it misses:
+- For 2 of the 5 child2 pauses (after words 9 and 16) the audio has no silence >= 400 ms
+  anywhere nearby. The pause is filled with sound (breath or a held vowel), which energy
+  cannot tell apart from speech.
+- The silences that are found often sit 0.5 to 2 s away from Whisper's word boundary
+  (example: the pause after word 54), so they get attached to the wrong gap.
+**Verdict: experimental. Do not show phrasing feedback to children.**
+
 ## Prompt settings
 Not run: each phone run takes 3.5 to 4.5 min. Expectation, untested: a prompt containing
 reading.txt pushes Whisper further toward the target text, which would hide more

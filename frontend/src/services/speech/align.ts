@@ -23,6 +23,9 @@ export interface AlignedWord {
   /** what Whisper heard for this word (joined if it split the word), null if missed */
   heard: string | null;
   similarity: number;
+  /** Whisper time span of the heard word, if timestamps exist */
+  startMs?: number;
+  endMs?: number;
   /** duration of the heard word, if timestamps exist */
   durationMs?: number;
   /** silence between the previous heard word and this one, if timestamps exist */
@@ -162,7 +165,11 @@ export function alignWords(targetText: string, heard: HeardWord[], opts: AlignOp
   let prevEnd: number | undefined;
   out.forEach((w, k) => {
     const { start, end } = spans[k];
-    if (start !== undefined && end !== undefined) w.durationMs = Math.max(0, end - start);
+    if (start !== undefined && end !== undefined) {
+      w.startMs = start;
+      w.endMs = end;
+      w.durationMs = Math.max(0, end - start);
+    }
     if (start !== undefined && prevEnd !== undefined) w.pauseBeforeMs = Math.max(0, start - prevEnd);
     if (end !== undefined) prevEnd = end;
   });

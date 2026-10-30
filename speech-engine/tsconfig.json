@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "types": []
   },
-  "files": ["../frontend/src/services/speech/align.ts"]
+  "files": ["../frontend/src/services/speech/align.ts", "../frontend/src/services/speech/phrasing.ts"]
 }
