@@ -35,7 +35,7 @@ SpeechEngineNotConnected
 Android can't record WAV; record AAC/m4a at speech settings and pass the URI:
 ```ts
 const recorder = useAudioRecorder({
-  extension: '.m4a', sampleRate: 16000, numberOfChannels: 1, bitRate: 64000,
+  extension: '.m4a', sampleRate: 16000, numberOfChannels: 1, bitRate: 128000, // 64 kbps measured worse
   android: { outputFormat: 'mpeg4', audioEncoder: 'aac' },
   ios: { audioQuality: AudioQuality.HIGH, outputFormat: IOSOutputFormat.MPEG4AAC },
 });
